@@ -32,6 +32,24 @@ const resetGame = (roomId) => {
 
     room.msg = `等待庄家[${room.players[room.bankerIndex].name}]开局`
 }
+// 解析玩家的牌型
+const parsePlayerCardType = (player) => {
+    const handA = GameLogic.evaluateHand(player.cards);
+    let type = handA.type
+    if (type === 6) {
+        return '豹子'
+    } else if (type === 5) {
+        return '同花顺'
+    } else if (type === 4) {
+        return '同花'
+    } else if (type === 3) {
+        return '顺子'
+    } else if (type === 2) {
+        return '对子'
+    } else if (type === 1) {
+        return '散牌'
+    }
+}
 
 const app = express();
 const server = http.createServer(app);
@@ -154,6 +172,7 @@ io.on("connection", (socket) => {
             GameLogic.nextBanker(room, winner.id);
             room.state = "gameOver";
             resetGame(room.id)
+            winner.type = parsePlayerCardType(winner)
             io.to(room.id).emit("gameOver", { winner, room });
             return;
         }
@@ -236,6 +255,7 @@ io.on("connection", (socket) => {
             GameLogic.nextBanker(room, winner.id);
             room.state = "gameOver";
             resetGame(room.id)
+            winner.type = parsePlayerCardType(winner)
             io.to(room.id).emit("gameOver", { winner, room });
             return;
         }
