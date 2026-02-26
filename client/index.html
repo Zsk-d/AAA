@@ -303,7 +303,7 @@
                                         === loanData.fromId).name}]请求借[${room.players.find(p => p.id ===
                                         loanData.targetId).name}]筹码: ${loanData.amount}`:'' }}
                                         {{ loanData.status === 'refuseLoan'?`${room.players.find(p => p.id ===
-                                        loanData.fromId).name}拒绝借出筹码`:'' }}
+                                        loanData.targetId).name}拒绝借出筹码`:'' }}
                                     </span>
                                     <span v-if="loanData && loanData.targetId == player.id">
                                         {{ loanData.status === 'request'? `[${room.players.find(p => p.id
