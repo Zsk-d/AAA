@@ -96,6 +96,8 @@ export class GameLogic {
     static bet(room, player, actionAmount) {
         if (!actionAmount) return [false, '请输入下注筹码'];
 
+        if (player.chips < actionAmount) return [false, '筹码不够, 请重新下注'];
+
         if (player.seen) {
             // 如果看了, 则跟着room走
             if (actionAmount < room.currentBet) {
@@ -111,8 +113,6 @@ export class GameLogic {
             room.currentBet = Math.max(room.currentBet, actionAmount * 2)
             room.menBet = actionAmount
         }
-
-        if (player.chips < actionAmount) return [false, '筹码不够, 请重新下注'];
 
         // 结算筹码
         player.chips -= actionAmount;

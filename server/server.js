@@ -249,8 +249,22 @@ io.on("connection", (socket) => {
         const room = roomManager.getRoom(socket.roomId);
         if (!room) return;
 
-        io.to(targetId).emit("loanRequest", {
-            from: socket.id,
+        const targetPlayer = room.players.find(p => p.id === targetId);
+
+        if (!amount) {
+            socket.emit("errorMsg", '请输入要借的筹码');
+            return;
+        }
+        // 检查对方是否够
+        if (targetPlayer.chips < amount) {
+            socket.emit("errorMsg", '对方筹码不够, 请重新操作');
+            return;
+        }
+
+        io.to(room.id).emit("loanEvent", {
+            status: 'request',
+            fromId: socket.id,
+            targetId: targetId,
             amount
         });
     });
@@ -267,6 +281,16 @@ io.on("connection", (socket) => {
         if (GameLogic.transferChips(lender, borrower, amount)) {
             notifyRoom(room.id, room)
         }
+    });
+    socket.on("refuseLoan", ({ targetId, fromId }) => {
+        const room = roomManager.getRoom(socket.roomId);
+        if (!room) return;
+
+        io.to(room.id).emit("loanEvent", {
+            status: 'refuseLoan',
+            fromId,
+            targetId
+        });
     });
     // 自动准备
     socket.on("autoReady", () => {

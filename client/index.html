@@ -93,7 +93,7 @@
         }
 
         #gameContainer .col-edge {
-            min-width: 100px;
+            /* min-width: 100px; */
         }
 
         #gameContainer .col-center {
@@ -112,13 +112,12 @@
             display: flex;
             align-items: center;
             box-sizing: border-box;
-            padding: 5px 10px;
+            padding: 2px 5px;
             background-color: aliceblue;
             margin-right: 10px;
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.2s ease-in-out;
-            height: 35px;
         }
 
         .action-btn:hover {
@@ -126,8 +125,8 @@
         }
 
         .card-item {
-            width: 60px;
-            height: 80px;
+            width: 50px;
+            height: 70px;
             border-radius: 6px;
             box-shadow: 5px 0px 31px rgba(0, 0, 0, 0.2);
             transition: transform 0.2s ease-in-out;
@@ -136,7 +135,7 @@
             align-items: center;
             justify-content: center;
             flex-direction: column;
-            font-size: 30px;
+            font-size: 28px;
             font-weight: bold;
         }
 
@@ -164,7 +163,7 @@
                     transparent 2px,
                     transparent 10px);
 
-            border-radius: 10px;
+            border-radius: 6px;
 
             box-shadow: 0 6px 16px rgba(0, 0, 0, 0.3);
         }
@@ -227,15 +226,17 @@
                 <div class="col col-edge" v-if="gameTable.left.length > 0">
                     <div v-for="(item,index) in gameTable.left" class="row">
                         <div v-if="item.id"
-                            style="display: flex;align-items: center;line-height: 20px;justify-content: flex-start;position:absolute;width: max-content;left: 0;">
+                            style="display: flex;line-height: 20px;
+                            justify-content: flex-start;
+                            position:absolute;width: max-content;left: 0;flex-direction: column;align-items: flex-start;row-gap: 2px;">
                             <div class="folded-tag tag" v-if="item.folded">已弃牌
                             </div>
+                            <div class="seen-tag tag" v-if="item.seen">已看牌</div>
+                            <div>{{ item.name }}</div>
+                            <div style="font-weight: bold;">筹码 {{ item.chips }}</div>
                             <div class="banker-tag tag" v-if="item.isBanker">庄家
                             </div>
-                            <div class="seen-tag tag" v-if="item.seen">已看牌</div>
-                            <div style="margin-right: 10px;">{{ item.name }}</div>
-                            <div style="font-weight: bold;margin-right: 10px;">筹码 {{ item.chips }}</div>
-                            <div class="ready-tag tag" v-if="room.state === 'waiting'" style="margin-right: 10px;">{{
+                            <div class="ready-tag tag" v-if="room.state === 'waiting'">{{
                                 item.ready?'已准备':'未准备' }}</div>
                         </div>
                     </div>
@@ -245,15 +246,17 @@
                 <div class="col col-center">
                     <!-- 顶部 -->
                     <div v-if="gameTable.top" class="row">
-                        <div style="display: flex; justify-content: center;align-items: center;line-height: 20px;">
-                            <div class="banker-tag tag" v-if="gameTable.top.isBanker">庄家
-                            </div>
+                        <div :style="{'flex-direction': isH && room.players.length > 2? 'column':'row'}"
+                            style="display: flex; justify-content: center;align-items: center;line-height: 20px;position: absolute;width: 100%;left: 0;row-gap: 2px;column-gap: 2px;">
                             <div class="folded-tag tag" v-if="gameTable.top.folded">已弃牌
                             </div>
                             <div class="seen-tag tag" v-if="gameTable.top.seen">已看牌</div>
-                            <div style="margin-right: 10px;">{{ gameTable.top.name }} 筹码
+                            <div>{{ gameTable.top.name }} </div>
+                            <div>筹码
+                                <span style="font-weight: bold;">{{ gameTable.top.chips }}</span>
                             </div>
-                            <div style="font-weight: bold;margin-right: 10px;">{{ gameTable.top.chips }}</div>
+                            <div class="banker-tag tag" v-if="gameTable.top.isBanker">庄家
+                            </div>
                             <div class="ready-tag tag" v-if="room.state === 'waiting'">{{
                                 gameTable.top.ready?'已准备':'未准备' }}
                             </div>
@@ -263,8 +266,7 @@
                     <div class="row center" style="min-height: 0px;">
                         <div class="game-area ">
                             <div>
-                                <div style="text-align: center;display: flex;align-items: center;"
-                                    :style="{'flex-direction': isH?'row':'column'}">
+                                <div style="text-align: center;display: flex;align-items: center;flex-direction:column">
                                     <span style="font-size: 18px;font-weight: bold;" v-if="room.state === 'gameOver'">
                                         {{ `&nbsp;${winner.name} 胜出 赢得筹码 ${winner.resultPot}` }} !
                                     </span>
@@ -291,6 +293,18 @@
                                         {{ room.state === 'gameOver' && !player.isBanker? room.msg: ''}}
                                         {{ room.state === 'gameOver' && player.isBanker? '&nbsp;请开始新对局': ''}}
                                     </span>
+                                    <span v-if="loanData && loanData.targetId !== player.id">
+                                        {{ loanData.status === 'request'? `[${room.players.find(p => p.id
+                                        === loanData.fromId).name}]请求借[${room.players.find(p => p.id ===
+                                        loanData.targetId).name}]筹码: ${loanData.amount}`:'' }}
+                                        {{ loanData.status === 'refuseLoan'?`${room.players.find(p => p.id ===
+                                        loanData.fromId).name}拒绝借出筹码`:'' }}
+                                    </span>
+                                    <span v-if="loanData && loanData.targetId == player.id">
+                                        {{ loanData.status === 'request'? `[${room.players.find(p => p.id
+                                        === loanData.fromId).name}]请求借你筹码: ${loanData.amount}`:'' }}
+                                        {{ loanData.status === 'refuseLoan'?'已拒绝':'' }}
+                                    </span>
                                 </div>
                                 <!-- 筹码池 -->
                                 <div class="chips-pool" v-if="room.state === 'playing'">
@@ -303,7 +317,7 @@
                     <div class="row">
                         <div style="display: flex;flex-direction: column;height: 100%;justify-content: space-between;">
                             <!-- 动作按钮 -->
-                            <div v-if="!action.isCompare && !player.folded "
+                            <div v-if="!action.isCompare && !player.folded && !action.isLoan && !(loanData && loanData.targetId == player.id)"
                                 style="display: flex; justify-content: center;margin-bottom: 10px;align-items: center;">
                                 <div @click="ready" v-if="room.state === 'waiting' && !player.ready" class="action-btn">
                                     {{ room.players.length > 1 && room.players.length -
@@ -326,6 +340,10 @@
                                     v-if="room.state === 'playing' && player.isBetBase && isMeAction() && room.betBaseOk"
                                     class="action-btn">比牌 -{{ player.seen?(room.currentBet * 2):(room.menBet * 2) }}
                                 </div>
+                                <div @click="loan"
+                                    v-if="room.state === 'playing' && player.isBetBase && isMeAction() && room.betBaseOk && player.chips < (player.seen?room.currentBet:room.menBet)"
+                                    class="action-btn">借筹码
+                                </div>
                                 <div @click="bet" class="action-btn"
                                     v-if="room.state === 'playing' && room.betBaseOk && isMeAction()">
                                     {{player.seen?'下':'闷'}}注
@@ -341,12 +359,30 @@
                                 </div>
                             </div>
                             <!-- 比牌区域 -->
-                            <div v-if="action.isCompare"
+                            <div v-if="action.isCompare && room.state === 'playing'"
                                 style="display: flex;align-items: center;justify-content: center;padding-bottom: 10px;">
                                 <div @click="action.isCompare = false" class="action-btn">取消</div>
                                 <div @click="compareSubmit(p.id)" class="action-btn"
                                     v-for="p in room.players.filter(p=>p.id !== player.id && !p.folded)">比
                                     {{p.name}}</div>
+                            </div>
+                            <!-- 借筹码区域 - 借入 -->
+                            <div v-if="action.isLoan"
+                                style="display: flex;align-items: center;justify-content: center;padding-bottom: 10px;">
+                                <div @click="action.isLoan = false" class="action-btn">取消</div>
+                                <div @click="loanSubmit(p.id)" class="action-btn"
+                                    v-for="p in room.players.filter(p=>p.id !== player.id)">向 {{p.name}}
+                                </div>
+                                <div class="action-btn">
+                                    借<input v-model="form.loanAmount" type="number" :min="getMinBet()"
+                                        style="width: 50px;height: 100%;border-radius: 5px;height: 10px;">
+                                </div>
+                            </div>
+                            <!-- 借筹码区域 - 借出 -->
+                            <div v-if="loanData && loanData.targetId == player.id && loanData.status === 'request'"
+                                style="display: flex;align-items: center;justify-content: center;padding-bottom: 10px;">
+                                <div @click="acceptLoan" class="action-btn">接受</div>
+                                <div @click="refuseLoan" class="action-btn">拒绝</div>
                             </div>
                             <!-- 牌区域 -->
                             <div v-if="(room.state === 'playing' && room.betBaseOk || room.state === 'gameOver') && !player.folded && (!winner || winner.id !== player.id)"
@@ -374,15 +410,16 @@
                 <!-- 右列 -->
                 <div class="col col-edge" v-if="gameTable.right.length > 0">
                     <div v-for="(item,index) in gameTable.right" class="row">
-                        <div v-if="item.id"
-                            style="display: flex;align-items: center;line-height: 20px;justify-content: flex-end;position:absolute;width: max-content;right: 0;">
+                        <div v-if="item.id" style="display: flex;line-height: 20px;justify-content: flex-end;
+                            flex-direction: column;align-items: flex-end;
+                            position:absolute;width: max-content;right: 0;row-gap: 2px;">
                             <div class="folded-tag tag" v-if="item.folded">已弃牌
                             </div>
+                            <div class="seen-tag tag" v-if="item.seen">已看牌</div>
+                            <div>{{ item.name }}</div>
+                            <div style="font-weight: bold;">筹码 {{ item.chips }}</div>
                             <div class="banker-tag tag" v-if="item.isBanker">庄家
                             </div>
-                            <div class="seen-tag tag" v-if="item.seen">已看牌</div>
-                            <div style="margin-right: 10px;">{{ item.name }}</div>
-                            <div style="font-weight: bold;margin-right: 10px;">筹码 {{ item.chips }}</div>
                             <div class="ready-tag tag" v-if="room.state === 'waiting'">{{
                                 item.ready?'已准备':'未准备' }}</div>
                         </div>
@@ -417,19 +454,21 @@
                 const room = ref(null)
                 const winner = ref(null)
                 const compareData = ref(null)
-                // const isH = ref(window.innerHeight < window.innerWidth)
-                const isH = ref(false)
+                const isH = ref(window.innerHeight > window.innerWidth)
+                // const isH = ref(false)
                 const cards = ref([{}, {}, {}])
                 const gameTable = ref({
                     left: [],
                     top: null,
                     right: []
                 })
+                const loanData = ref(null)
                 const action = ref({
                     showLogin: true,
                     showGame: false,
                     hideCard: false,
                     isCompare: false,
+                    isLoan: false,
                 })
 
                 socket.on("connect", () => {
@@ -438,6 +477,15 @@
 
                 onMounted(() => {
                     const self = this
+
+                    // 监听窗口尺寸变化
+                    window.onresize = function () {
+                        if (window.innerHeight > window.innerWidth) {
+                            isH.value = true;
+                        } else {
+                            isH.value = false;
+                        }
+                    };
                     // 手机横屏检测
                     if (window.innerHeight > window.innerWidth) {
                         // alert("请横屏体验游戏");
@@ -454,6 +502,7 @@
                     winner,
                     player,
                     compareData,
+                    loanData,
                     playerMap: new Map(),
                     form,
                     initGame() {
@@ -473,6 +522,12 @@
                         if (room.value.state === 'waiting') {
                             cards.value = [{}, {}, {}]
                         }
+                        loanData.value = null
+                        action.value.isLoan = false
+                        action.value.isCompare = false
+                        action.value.isCompare = false
+
+                        form.value.betAmount = player.value.seen ? room.value.currentBet : room.value.menBet
                         this.renderTable()
                     },
                     // 创建/加入房间
@@ -484,6 +539,15 @@
                         });
                         socket.on("errorMsg", msg => {
                             alert(msg)
+                        });
+                        // 申请借筹码事件发生
+                        socket.on("loanEvent", ({ status, fromId, targetId, amount }) => {
+                            loanData.value = {
+                                status,
+                                fromId,
+                                targetId,
+                                amount
+                            }
                         });
                         // 游戏开始
                         socket.on("gameStart", room => {
@@ -519,6 +583,10 @@
                             initChips: initChips && parseInt(initChips) || 50,
                             spectator: false
                         });
+                    },
+                    loan() {
+                        // requestLoan
+                        action.value.isLoan = true
                     },
                     renderTable() {
                         gameTable.value = {
@@ -606,11 +674,22 @@
                     start() {
                         socket.emit("start", {});
                     },
+                    acceptLoan() {
+                        socket.emit("acceptLoan", loanData.value);
+                    },
+                    refuseLoan() {
+                        socket.emit("refuseLoan", loanData.value);
+                        action.value.isLoan = false
+                    },
                     compare() {
                         action.value.isCompare = true
                     },
                     compareSubmit(targetId) {
                         socket.emit("compare", { targetId });
+                        action.value.isLoan = false
+                    },
+                    loanSubmit(targetId) {
+                        socket.emit("requestLoan", { targetId, amount: form.value.loanAmount });
                         action.value.isCompare = false
                     },
                     // 旁观
