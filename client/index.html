@@ -578,9 +578,11 @@
 
                         if (!roomId) {
                             alert("请填写房间号")
+                            return
                         }
                         if (!name) {
                             alert("请填写昵称")
+                            return
                         }
 
                         socket.emit("createOrJoinRoom", {
