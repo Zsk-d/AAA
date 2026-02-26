@@ -213,7 +213,7 @@
                 <input v-model="form.name" placeholder="名字(必填)" />
                 <input v-model="form.initChips" type="number" min="1" placeholder="初始筹码(默认50)" />
                 <input v-model="form.baseBet" type="number" min="1" placeholder="底注(默认1)" />
-                <button @click="createJoin()">创建/加入</button>
+                <button @click="!action.isJoining && createJoin()">创建/加入{{action.isJoining?'中...':''}}</button>
                 <!-- <button @click="spectate()">旁观</button> -->
             </div>
         </div>
@@ -437,7 +437,8 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script type="module" src="./js/main.js"></script>
     <script>
-        const socket = io("/");
+        const socket = io("http://localhost:3000");
+        // const socket = io("/");
         const { createApp, ref, onMounted } = Vue;
 
         createApp({
@@ -470,6 +471,7 @@
                     hideCard: false,
                     isCompare: false,
                     isLoan: false,
+                    isJoining: false,
                 })
 
                 socket.on("connect", () => {
@@ -527,6 +529,7 @@
                         action.value.isLoan = false
                         action.value.isCompare = false
                         action.value.isCompare = false
+                        action.value.isJoining = false
 
                         form.value.betAmount = player.value.seen ? room.value.currentBet : room.value.menBet
                         this.renderTable()
@@ -585,6 +588,8 @@
                             alert("请填写昵称")
                             return
                         }
+
+                        action.value.isJoining = true
 
                         socket.emit("createOrJoinRoom", {
                             roomId,

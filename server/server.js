@@ -49,6 +49,10 @@ io.on("connection", (socket) => {
     // 创建或加入房间
     socket.on("createOrJoinRoom", ({ roomId, name, baseBet, initChips, spectator }) => {
 
+        if (roomId) {
+            socket.emit("errorMsg", "房间号不能为空");
+            return;
+        }
         let room = roomManager.getRoom(roomId);
 
         if (!room && !spectator) {
@@ -61,6 +65,12 @@ io.on("connection", (socket) => {
         }
         if (room.state !== 'waiting') {
             socket.emit("errorMsg", "房间对局正在进行, 请等待");
+            return;
+        }
+
+        // 检查name是否存在
+        if (room.players.find(p => p.name === name)) {
+            socket.emit("errorMsg", "名称已存在");
             return;
         }
 
@@ -92,6 +102,11 @@ io.on("connection", (socket) => {
 
         const player = room.players.find(p => p.id === socket.id);
         if (!player || player.folded) return;
+
+        // 检查是否是当前用户下注
+        if (player.id !== room.players[room.turnIndex].id) {
+            return;
+        }
 
         let [res, msg] = GameLogic.bet(room, player, amount)
         if (res) {
