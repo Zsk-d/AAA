@@ -114,6 +114,12 @@ io.on("connection", (socket) => {
         } else {
             room.msg = msg;
         }
+        // 清除所有用户的动作
+        room.players.forEach(p => {
+            p.action = null;
+        });
+        // 当前用户动作设定
+        player.action = `${player.seen ? '下' : '闷'}注 ${amount}`
         notifyRoom(room.id, room)
     });
     // 下底
@@ -151,6 +157,13 @@ io.on("connection", (socket) => {
             io.to(room.id).emit("gameOver", { winner, room });
             return;
         }
+
+        // 清除所有用户的动作
+        room.players.forEach(p => {
+            p.action = null;
+        });
+        // 当前用户动作设定
+        player.action = `弃牌`
 
         GameLogic.nextTurn(room);
         notifyRoom(room.id, room)
@@ -207,6 +220,14 @@ io.on("connection", (socket) => {
         room.pot += room.currentBet * 2;
 
         const active = GameLogic.activePlayers(room);
+
+        // 清除所有用户的动作
+        room.players.forEach(p => {
+            p.action = null;
+        });
+        // 当前用户动作设定
+        playerA.action = `与 ${playerB.name} 比牌`
+
         if (active.length <= 1) {
             const winner = GameLogic.settle(room);
             if (!winner.seen) {
@@ -256,6 +277,7 @@ io.on("connection", (socket) => {
         room.players.forEach(i => {
             i.folded = false
             i.seen = false
+            i.action = null;
         })
         notifyRoom(room.id, room, 'gameStart')
     });

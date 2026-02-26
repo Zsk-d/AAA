@@ -205,6 +205,31 @@
         .seen-tag {
             background-color: #b2d142;
         }
+
+        .action-tag {
+            background-color: #366462;
+        }
+
+        .breathing-text {
+            color: #ff0000;
+            /* 基础红色，通过 brightness 滤镜变为黑色 */
+            animation: breathe 2s infinite ease-in-out;
+            will-change: filter;
+        }
+
+        @keyframes breathe {
+
+            0%,
+            100% {
+                filter: brightness(0);
+                /* 纯黑 */
+            }
+
+            50% {
+                filter: brightness(1);
+                /* 纯红 */
+            }
+        }
     </style>
 </head>
 
@@ -240,10 +265,13 @@
                             <div class="folded-tag tag" v-if="item.folded">已弃牌
                             </div>
                             <div class="seen-tag tag" v-if="item.seen">已看牌</div>
-                            <div>{{ item.name }}</div>
+                            <div
+                                :class="{'breathing-text': room.state === 'playing' && room.players[room.turnIndex].id === item.id}">
+                                {{ item.name }}</div>
                             <div style="font-weight: bold;">筹码 {{ item.chips }}</div>
                             <div class="banker-tag tag" v-if="item.isBanker">庄家
                             </div>
+                            <div class="action-tag tag" v-if="item.action">{{ item.action }}</div>
                             <div class="ready-tag tag" v-if="room.state === 'waiting'">{{
                                 item.ready?'已准备':'未准备' }}</div>
                         </div>
@@ -255,16 +283,20 @@
                     <!-- 顶部 -->
                     <div v-if="gameTable.top" class="row">
                         <div :style="{'flex-direction': isH && room.players.length > 2? 'column':'row'}"
-                            style="display: flex; justify-content: center;align-items: center;line-height: 20px;position: absolute;width: 100%;left: 0;row-gap: 2px;column-gap: 2px;">
+                            style="display: flex; justify-content: center;box-sizing: border-box;
+                            align-items: center;line-height: 20px;position: absolute;width: 100%;left: 0;row-gap: 2px;column-gap: 2px;">
                             <div class="folded-tag tag" v-if="gameTable.top.folded">已弃牌
                             </div>
                             <div class="seen-tag tag" v-if="gameTable.top.seen">已看牌</div>
-                            <div>{{ gameTable.top.name }} </div>
+                            <div
+                                :class="{'breathing-text':room.state === 'playing' &&  room.players[room.turnIndex].id === gameTable.top.id}">
+                                {{ gameTable.top.name }} </div>
                             <div>筹码
                                 <span style="font-weight: bold;">{{ gameTable.top.chips }}</span>
                             </div>
                             <div class="banker-tag tag" v-if="gameTable.top.isBanker">庄家
                             </div>
+                            <div class="action-tag tag" v-if="gameTable.top.action">{{ gameTable.top.action }}</div>
                             <div class="ready-tag tag" v-if="room.state === 'waiting'">{{
                                 gameTable.top.ready?'已准备':'未准备' }}
                             </div>
@@ -424,10 +456,14 @@
                             <div class="folded-tag tag" v-if="item.folded">已弃牌
                             </div>
                             <div class="seen-tag tag" v-if="item.seen">已看牌</div>
-                            <div>{{ item.name }}</div>
+                            <div
+                                :class="{'breathing-text': room.state === 'playing' && room.players[room.turnIndex].id === item.id}">
+                                {{ item.name
+                                }}</div>
                             <div style="font-weight: bold;">筹码 {{ item.chips }}</div>
                             <div class="banker-tag tag" v-if="item.isBanker">庄家
                             </div>
+                            <div class="action-tag tag" v-if="item.action">{{ item.action }}</div>
                             <div class="ready-tag tag" v-if="room.state === 'waiting'">{{
                                 item.ready?'已准备':'未准备' }}</div>
                         </div>
