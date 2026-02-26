@@ -49,7 +49,7 @@ io.on("connection", (socket) => {
     // 创建或加入房间
     socket.on("createOrJoinRoom", ({ roomId, name, baseBet, initChips, spectator }) => {
 
-        if (roomId) {
+        if (!roomId) {
             socket.emit("errorMsg", "房间号不能为空");
             return;
         }
