@@ -5,6 +5,7 @@
     <meta charset="UTF-8" />
     <meta name="color-scheme" content="light">
     <meta name="color-scheme" content="only light">
+    <link rel="manifest" href="manifest.json" />
     <title>AAA</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <style>
@@ -53,7 +54,7 @@
             display: flex;
             flex-direction: column;
             gap: 5px;
-            width: 180px;
+            width: 210px;
         }
 
         input,
@@ -209,6 +210,10 @@
         <!-- 登录容器 -->
         <div id="loginPanel" v-if="action.showLogin">
             <div class="login-box">
+
+                <div style="text-align: center;">
+                    <h3>普通的炸金花</h3>
+                </div>
                 <input v-model="form.roomId" placeholder="房间号(必填)" />
                 <input v-model="form.name" placeholder="名字(必填)" />
                 <input v-model="form.initChips" type="number" min="1" placeholder="初始筹码(默认50)" />
