@@ -3,9 +3,28 @@
 
 <head>
     <meta charset="UTF-8" />
+    <meta name="color-scheme" content="light">
+    <meta name="color-scheme" content="only light">
     <title>AAA</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <style>
+        html,
+        body,
+        * {
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+
+            -webkit-tap-highlight-color: transparent;
+
+            -webkit-touch-callout: none;
+        }
+
+        :root {
+            color-scheme: light;
+        }
+
         html,
         body {
             margin: 0;
@@ -13,6 +32,8 @@
             overflow: hidden;
             /* background: #0b3d2e; */
             font-family: Arial;
+            color-scheme: light;
+            height: 100%;
         }
 
         #loginPanel {
@@ -26,18 +47,18 @@
 
         .login-box {
             background: rgba(0, 0, 0, 0.6);
-            padding: 30px;
-            border-radius: 10px;
+            padding: 10px;
+            border-radius: 5px;
             color: white;
             display: flex;
             flex-direction: column;
-            gap: 10px;
-            min-width: 250px;
+            gap: 5px;
+            width: 180px;
         }
 
         input,
         button {
-            padding: 8px;
+            padding: 5px;
             font-size: 16px;
         }
 
@@ -45,7 +66,7 @@
 
         #gameContainer .table {
             box-sizing: border-box;
-            padding: 20px;
+            padding: 5px;
             width: 100%;
             height: 100%;
             display: flex;
@@ -64,7 +85,7 @@
 
         #gameContainer .center {
             box-sizing: border-box;
-            padding: 20px;
+            padding: 10px 0;
             display: flex;
             flex-grow: 1;
             justify-content: center;
@@ -72,7 +93,7 @@
         }
 
         #gameContainer .col-edge {
-            min-width: 200px;
+            min-width: 100px;
         }
 
         #gameContainer .col-center {
@@ -80,7 +101,7 @@
         }
 
         #gameContainer .game-area {
-            padding: 20px;
+            padding: 5px;
             box-sizing: border-box;
             box-shadow: 5px 0px 56px rgba(0, 0, 0, 0.2);
 
@@ -88,13 +109,16 @@
         }
 
         .action-btn {
+            display: flex;
+            align-items: center;
             box-sizing: border-box;
-            padding: 10px 20px;
+            padding: 5px 10px;
             background-color: aliceblue;
             margin-right: 10px;
             border-radius: 5px;
             cursor: pointer;
             transition: background-color 0.2s ease-in-out;
+            height: 35px;
         }
 
         .action-btn:hover {
@@ -102,8 +126,8 @@
         }
 
         .card-item {
-            width: 80px;
-            height: 100px;
+            width: 60px;
+            height: 80px;
             border-radius: 6px;
             box-shadow: 5px 0px 31px rgba(0, 0, 0, 0.2);
             transition: transform 0.2s ease-in-out;
@@ -112,7 +136,7 @@
             align-items: center;
             justify-content: center;
             flex-direction: column;
-            font-size: 35px;
+            font-size: 30px;
             font-weight: bold;
         }
 
@@ -148,34 +172,41 @@
         .chips-pool {
             display: flex;
             justify-content: center;
-            font-size: 30px;
+            font-size: 18px;
             font-weight: bold;
             box-sizing: border-box;
-            padding: 20px 0;
+            padding: 3px 0;
+        }
+
+        .tag {
+            box-sizing: border-box;
+            color: #fff;
+            border-radius: 3px;
+            margin-right: 3px;
+            padding: 0px 2px;
+            font-size: 10px;
         }
 
         .banker-tag {
-            box-sizing: border-box;
-            padding: 5px 10px;
             background-color: #80ab7f;
-            color: #fff;
-            border-radius: 5px;
-            margin-right: 10px;
+        }
+
+        .ready-tag {
+            background-color: #3b7a3a;
         }
 
         .folded-tag {
-            box-sizing: border-box;
-            padding: 5px 10px;
             background-color: #cc8042;
-            color: #fff;
-            border-radius: 5px;
-            margin-right: 10px;
+        }
+
+        .seen-tag {
+            background-color: #b2d142;
         }
     </style>
 </head>
 
 <body>
-    <div id="app">
+    <div id="app" style="height: 100%;">
         <!-- 登录容器 -->
         <div id="loginPanel" v-if="action.showLogin">
             <div class="login-box">
@@ -184,25 +215,28 @@
                 <input v-model="form.initChips" type="number" min="1" placeholder="初始筹码" />
                 <input v-model="form.baseBet" type="number" min="1" placeholder="底注" />
                 <button @click="createJoin()">创建/加入</button>
-                <button @click="spectate()">旁观</button>
+                <!-- <button @click="spectate()">旁观</button> -->
             </div>
         </div>
         <!-- 游戏容器 -->
-        <div id="gameContainer" v-if="action.showGame" style="width: 100vw;height: 100vh;display: flex;">
+        <div id="gameContainer" v-if="action.showGame"
+            style="width: 100vw;height: 100%;display: flex;box-sizing: border-box;">
             <!-- 5行 3列的表格 -->
             <div class="table">
                 <!-- 左列 -->
                 <div class="col col-edge" v-if="gameTable.left.length > 0">
                     <div v-for="(item,index) in gameTable.left" class="row">
                         <div v-if="item.id"
-                            style="display: flex;align-items: center;line-height: 20px;justify-content: flex-start;">
-                            <div class="folded-tag" style="margin-right: 10px;" v-if="item.folded">已弃牌
+                            style="display: flex;align-items: center;line-height: 20px;justify-content: flex-start;position:absolute;width: max-content;left: 0;">
+                            <div class="folded-tag tag" v-if="item.folded">已弃牌
                             </div>
-                            <div class="banker-tag" style="margin-right: 10px;" v-if="item.isBanker">庄家
+                            <div class="banker-tag tag" v-if="item.isBanker">庄家
                             </div>
+                            <div class="seen-tag tag" v-if="item.seen">已看牌</div>
                             <div style="margin-right: 10px;">{{ item.name }}</div>
                             <div style="font-weight: bold;margin-right: 10px;">筹码 {{ item.chips }}</div>
-                            <div v-if="room.waiting" style="margin-right: 10px;">{{ item.ready?'已准备':'未准备' }}</div>
+                            <div class="ready-tag tag" v-if="room.state === 'waiting'" style="margin-right: 10px;">{{
+                                item.ready?'已准备':'未准备' }}</div>
                         </div>
                     </div>
                     <div class="row"><span> </span></div>
@@ -212,44 +246,51 @@
                     <!-- 顶部 -->
                     <div v-if="gameTable.top" class="row">
                         <div style="display: flex; justify-content: center;align-items: center;line-height: 20px;">
-                            <div class="banker-tag" v-if="gameTable.top.isBanker">庄家
+                            <div class="banker-tag tag" v-if="gameTable.top.isBanker">庄家
                             </div>
+                            <div class="folded-tag tag" v-if="gameTable.top.folded">已弃牌
+                            </div>
+                            <div class="seen-tag tag" v-if="gameTable.top.seen">已看牌</div>
                             <div style="margin-right: 10px;">{{ gameTable.top.name }} 筹码
                             </div>
                             <div style="font-weight: bold;margin-right: 10px;">{{ gameTable.top.chips }}</div>
-                            <div v-if="room.state === 'waiting'">{{ gameTable.top.ready?'已准备':'未准备' }}</div>
+                            <div class="ready-tag tag" v-if="room.state === 'waiting'">{{
+                                gameTable.top.ready?'已准备':'未准备' }}
+                            </div>
                         </div>
                     </div>
                     <!-- 牌桌区域 -->
                     <div class="row center" style="min-height: 0px;">
-                        <div class="game-area " style="min-width: 400px;">
+                        <div class="game-area ">
                             <div>
-                                <div style="text-align: center;display: flex;flex-direction: column;">
-                                    <span v-if="room.state === 'playing'" style="font-size: 18px;font-weight: bold;">
-                                        当前底注: {{ room.currentBet }} </span>
-                                    <span style="font-size: 22px;font-weight: bold;">
-                                        {{ room.state === 'waiting'? ` 等待开始
-                                        准备(${room.players.filter(i=>i.ready).length}/${room.players.length})` :'' }}
-                                        {{ room.state === 'playing' && !room.betBaseOk && !player.isBetBase? ' 开始下底':''
-                                        }}
-                                        {{ room.state === 'playing' && !room.betBaseOk && player.isBetBase?
-                                        `等待其他玩家下底`:'' }}
-                                        {{ room.state === 'playing' && room.betBaseOk? isMeAction()?(" " + room.msg):`
-                                        等待[${room.players[room.turnIndex].name}]操作`:'' }}
-                                        {{ room.state === 'gameOver' && !player.isBanker? room.msg: ''}}
-                                        {{ room.state === 'gameOver' && player.isBanker? '请开始新对局': ''}}
-                                    </span>
-                                    <span style="font-size: 32px;font-weight: bold;" v-if="room.state === 'gameOver'">
-                                        {{ winner.name }} 胜出 赢得筹码 {{ winner.resultPot }} !
+                                <div style="text-align: center;display: flex;align-items: center;"
+                                    :style="{'flex-direction': isH?'row':'column'}">
+                                    <span style="font-size: 18px;font-weight: bold;" v-if="room.state === 'gameOver'">
+                                        {{ `&nbsp;${winner.name} 胜出 赢得筹码 ${winner.resultPot}` }} !
                                     </span>
                                     <div v-if="room.state === 'gameOver'"
-                                        style="display: flex;justify-content: space-between;padding: 20px 10px;">
+                                        style="display: flex;justify-content: space-between; column-gap: 5px;">
                                         <div v-for="(card, index) in winner.cards" class="card-item"
                                             :class="{'red': card.suit === '♥' || card.suit === '♦'}">
                                             <span>{{ card.rank }}</span>
                                             <span>{{ card.suit }}</span>
                                         </div>
                                     </div>
+                                    <span v-if="room.state === 'playing'" style="font-size: 14px;">
+                                        跟注: {{ room.currentBet }} 闷: {{ room.menBet }} </span>
+                                    <span style="font-size: 16px;font-weight: bold;">
+                                        {{ room.state === 'waiting'? `&nbsp;等待开始
+                                        准备(${room.players.filter(i=>i.ready).length}/${room.players.length})` :'' }}
+                                        {{ room.state === 'playing' && !room.betBaseOk && !player.isBetBase?
+                                        '&nbsp;开始下底':''
+                                        }}
+                                        {{ room.state === 'playing' && !room.betBaseOk && player.isBetBase?
+                                        `&nbsp;等待其他玩家下底`:'' }}
+                                        {{ room.state === 'playing' && room.betBaseOk? isMeAction()?(" " +
+                                        room.msg):`&nbsp;等待[${room.players[room.turnIndex].name}]操作`:'' }}
+                                        {{ room.state === 'gameOver' && !player.isBanker? room.msg: ''}}
+                                        {{ room.state === 'gameOver' && player.isBanker? '&nbsp;请开始新对局': ''}}
+                                    </span>
                                 </div>
                                 <!-- 筹码池 -->
                                 <div class="chips-pool" v-if="room.state === 'playing'">
@@ -262,7 +303,8 @@
                     <div class="row">
                         <div style="display: flex;flex-direction: column;height: 100%;justify-content: space-between;">
                             <!-- 动作按钮 -->
-                            <div style="display: flex; justify-content: center;margin-bottom: 10px;">
+                            <div v-if="!action.isCompare && !player.folded "
+                                style="display: flex; justify-content: center;margin-bottom: 10px;align-items: center;">
                                 <div @click="ready" v-if="room.state === 'waiting' && !player.ready" class="action-btn">
                                     {{ room.players.length > 1 && room.players.length -
                                     room.players.filter(i=>i.ready).length === 1?'开局':'准备' }}
@@ -280,9 +322,13 @@
                                 <div @click="fold"
                                     v-if="room.state === 'playing' && player.isBetBase && player.seen && isMeAction()"
                                     class="action-btn">弃牌</div>
+                                <div @click="compare"
+                                    v-if="room.state === 'playing' && player.isBetBase && isMeAction() && room.betBaseOk"
+                                    class="action-btn">比牌 -{{ player.seen?(room.currentBet * 2):(room.menBet * 2) }}
+                                </div>
                                 <div @click="bet" class="action-btn"
                                     v-if="room.state === 'playing' && room.betBaseOk && isMeAction()">
-                                    下注
+                                    {{player.seen?'下':'闷'}}注
                                 </div>
                                 <div @click="start" class="action-btn"
                                     v-if="room.state === 'gameOver' && room.players[room.turnIndex].id === player.id">
@@ -290,13 +336,21 @@
                                 </div>
                                 <div class="action-btn"
                                     v-if="room.state === 'playing' && room.betBaseOk && isMeAction()">
-                                    <input v-model="form.betAmount" type="number" placeholder="下注金额"
-                                        style="width: 100px;border-radius: 5px;height: 10px;">
+                                    <input v-model="form.betAmount" type="number" :min="getMinBet()"
+                                        style="width: 50px;height: 100%;border-radius: 5px;height: 10px;">
                                 </div>
                             </div>
+                            <!-- 比牌区域 -->
+                            <div v-if="action.isCompare"
+                                style="display: flex;align-items: center;justify-content: center;padding-bottom: 10px;">
+                                <div @click="action.isCompare = false" class="action-btn">取消</div>
+                                <div @click="compareSubmit(p.id)" class="action-btn"
+                                    v-for="p in room.players.filter(p=>p.id !== player.id && !p.folded)">比
+                                    {{p.name}}</div>
+                            </div>
                             <!-- 牌区域 -->
-                            <div v-if="(room.state === 'playing' && room.betBaseOk || room.state === 'gameOver') && !player.folded"
-                                style="display: flex;justify-content: space-evenly;padding: 20px 0px;box-sizing: border-box;">
+                            <div v-if="(room.state === 'playing' && room.betBaseOk || room.state === 'gameOver') && !player.folded && (!winner || winner.id !== player.id)"
+                                style="display: flex;justify-content: space-evenly;padding-bottom: 5px;box-sizing: border-box;width: 100%;">
                                 <!-- 3 张牌 -->
                                 <div v-for="(card, index) in cards" class="card-item"
                                     :class="{'card-back': (!player.seen || action.hideCard) && room.state !== 'gameOver','red': card.suit === '♥' || card.suit === '♦'}">
@@ -306,10 +360,10 @@
                             </div>
                             <!-- 底部信息 -->
                             <div style="display: flex; justify-content: center;align-items: center;line-height: 20px;">
-                                <div class="folded-tag" style="margin-right: 10px;" v-if="player.folded">已弃牌
+                                <div class="folded-tag tag" style="margin-right: 10px;" v-if="player.folded">已弃牌
                                     <span v-for="card in cards">[{{ card.rank}} {{ card.suit }}] </span>
                                 </div>
-                                <div class="banker-tag" v-if="player.isBanker">庄家</div>
+                                <div class="banker-tag tag" v-if="player.isBanker">庄家</div>
                                 <div style="margin-right: 10px;">{{ player.name }}</div>
                                 <div>筹码<span style="font-weight: bold;margin-left: 10px">{{ player.chips }}</div>
                             </div>
@@ -321,14 +375,16 @@
                 <div class="col col-edge" v-if="gameTable.right.length > 0">
                     <div v-for="(item,index) in gameTable.right" class="row">
                         <div v-if="item.id"
-                            style="display: flex;align-items: center;line-height: 20px;justify-content: flex-end;">
-                            <div class="folded-tag" style="margin-right: 10px;" v-if="item.folded">已弃牌
+                            style="display: flex;align-items: center;line-height: 20px;justify-content: flex-end;position:absolute;width: max-content;right: 0;">
+                            <div class="folded-tag tag" v-if="item.folded">已弃牌
                             </div>
-                            <div class="banker-tag" style="margin-right: 10px;" v-if="item.isBanker">庄家
+                            <div class="banker-tag tag" v-if="item.isBanker">庄家
                             </div>
+                            <div class="seen-tag tag" v-if="item.seen">已看牌</div>
                             <div style="margin-right: 10px;">{{ item.name }}</div>
                             <div style="font-weight: bold;margin-right: 10px;">筹码 {{ item.chips }}</div>
-                            <div v-if="room.waiting" style="margin-right: 10px;">{{ item.ready?'已准备':'未准备' }}</div>
+                            <div class="ready-tag tag" v-if="room.state === 'waiting'">{{
+                                item.ready?'已准备':'未准备' }}</div>
                         </div>
                         <span v-else> </span>
                     </div>
@@ -344,14 +400,15 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script type="module" src="./js/main.js"></script>
     <script>
-        const socket = io("http://localhost:3000");
+        const socket = io("http://192.168.2.24:3000");
         const { createApp, ref, onMounted } = Vue;
 
         createApp({
             setup() {
                 const form = ref({
                     roomId: '1',
-                    name: 'Dai',
+                    // 随机名称
+                    name: 'user-' + Math.random().toString(36).substring(2, 5),
                     initChips: null,
                     baseBet: null
                 })
@@ -359,6 +416,9 @@
                 const player = ref(null)
                 const room = ref(null)
                 const winner = ref(null)
+                const compareData = ref(null)
+                // const isH = ref(window.innerHeight < window.innerWidth)
+                const isH = ref(false)
                 const cards = ref([{}, {}, {}])
                 const gameTable = ref({
                     left: [],
@@ -368,7 +428,8 @@
                 const action = ref({
                     showLogin: true,
                     showGame: false,
-                    hideCard: false
+                    hideCard: false,
+                    isCompare: false,
                 })
 
                 socket.on("connect", () => {
@@ -379,11 +440,12 @@
                     const self = this
                     // 手机横屏检测
                     if (window.innerHeight > window.innerWidth) {
-                        alert("请横屏体验游戏");
+                        // alert("请横屏体验游戏");
                         return;
                     }
                 });
                 return {
+                    isH,
                     gameTable,
                     myId: null,
                     room,
@@ -391,6 +453,7 @@
                     action,
                     winner,
                     player,
+                    compareData,
                     playerMap: new Map(),
                     form,
                     initGame() {
@@ -419,9 +482,13 @@
                             this.room = room;
                             this.initGame();
                         });
+                        socket.on("errorMsg", msg => {
+                            alert(msg)
+                        });
                         // 游戏开始
                         socket.on("gameStart", room => {
                             this.room = room;
+                            winner.value = null;
                             this.initGame();
                         });
                         socket.on("yourCards", cards => {
@@ -517,6 +584,9 @@
                     betBase() {
                         socket.emit("betBase", {});
                     },
+                    getMinBet() {
+                        return player.value.seen ? room.value.cuurntBet : room.value.menBet
+                    },
                     // bet
                     bet() {
                         let amount = form.value.betAmount
@@ -535,6 +605,13 @@
                     },
                     start() {
                         socket.emit("start", {});
+                    },
+                    compare() {
+                        action.value.isCompare = true
+                    },
+                    compareSubmit(targetId) {
+                        socket.emit("compare", { targetId });
+                        action.value.isCompare = false
                     },
                     // 旁观
                     spectate() {

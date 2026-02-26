@@ -44,11 +44,11 @@ export class GameLogic {
             player.cards = [deck.pop(), deck.pop(), deck.pop()];
             player.folded = false;
             player.seen = false;
-            player.currentBet = 0;
             player.isBetBase = false;
         });
 
         room.pot = 0;
+        room.menBet = room.baseBet;
         room.currentBet = room.baseBet;
         room.turnIndex = room.bankerIndex;
 
@@ -105,8 +105,11 @@ export class GameLogic {
             room.currentBet = actionAmount
         } else {
             // 如果没看, room的筹码则修改未不能小于player的两倍
-            room.currentBet = Math.max(actionAmount, actionAmount * 2)
-            player.currentBet = actionAmount
+            if (actionAmount < room.menBet) {
+                return [false, `闷注筹码不够, 至少为${room.menBet}, 请重新闷注`]
+            }
+            room.currentBet = Math.max(room.currentBet, actionAmount * 2)
+            room.menBet = actionAmount
         }
 
         if (player.chips < actionAmount) return [false, '筹码不够, 请重新下注'];
@@ -124,25 +127,12 @@ export class GameLogic {
         // 检查本局是否所有玩家都下底了
 
         if (room.players.every(i => i.isBetBase)) {
-            room.msg = '开始下注'
+            room.msg = ' 开始下注'
             room.betBaseOk = true
         }
         return true;
     }
 
-    // ===== 跟注 =====
-    static follow(room, player, actionAmount) {
-        if (player.chips < actionAmount) return [false, '筹码不够'];
-
-        if (actionAmount < room.currentBet) return [false, '下注筹码不够, 当前底注为: ' + room.currentBet];
-
-        player.chips -= actionAmount;
-        player.currentBet = actionAmount;
-        room.currentBet = actionAmount;
-        room.pot += actionAmount;
-
-        return true;
-    }
     // ===== 借筹码 =====
     static transferChips(fromPlayer, toPlayer, amount) {
         if (fromPlayer.chips < amount) return false;
@@ -178,7 +168,7 @@ export class GameLogic {
         } while (room.players[next].folded);
 
         room.turnIndex = next;
-        room.msg = '开始下注'
+        room.msg = ' 开始下注'
     }
 
     // ===== 判断胜负 =====

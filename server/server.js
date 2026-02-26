@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 
 
 const roomManager = new RoomManager();
-const notifyRoom = (roomId, room) => {
+const notifyRoom = (roomId, room, action) => {
     if (!room) {
         return
     }
@@ -16,7 +16,7 @@ const notifyRoom = (roomId, room) => {
     _room.players.forEach(p => {
         p.cards = [];
     });
-    io.to(roomId).emit("roomUpdate", _room);
+    io.to(roomId).emit(action ? action : "roomUpdate", _room);
 }
 
 // 一局结束, 重置牌桌内容
@@ -46,6 +46,7 @@ io.on("connection", (socket) => {
     console.log("用户连接:", socket.id);
     userSocketMap[socket.id] = socket;
 
+    // 创建或加入房间
     socket.on("createOrJoinRoom", ({ roomId, name, baseBet, initChips, spectator }) => {
 
         let room = roomManager.getRoom(roomId);
@@ -56,6 +57,10 @@ io.on("connection", (socket) => {
 
         if (!room) {
             socket.emit("errorMsg", "房间不存在");
+            return;
+        }
+        if (room.state !== 'waiting') {
+            socket.emit("errorMsg", "房间对局正在进行, 请等待");
             return;
         }
 
@@ -148,13 +153,21 @@ io.on("connection", (socket) => {
         socket.emit("yourCards", player.cards); // 只发给自己
         notifyRoom(room.id, room)
     });
-
     // 比牌
     socket.on("compare", ({ targetId }) => {
         const room = roomManager.getRoom(socket.roomId);
         if (!room) return;
 
         const playerA = room.players.find(p => p.id === socket.id);
+
+        // 计算比牌花费
+        let cast = playerA.seen ? room.currentBet * 2 : room.menBet * 2
+        // 检查筹码是否够翻倍的
+        if (playerA.chips < cast) {
+            room.msg = '比牌筹码不够, 需要' + cast + ', 请重新操作'
+            notifyRoom(room.id, room)
+            return;
+        }
         const playerB = room.players.find(p => p.id === targetId);
 
         const handA = GameLogic.evaluateHand(playerA.cards);
@@ -170,20 +183,29 @@ io.on("connection", (socket) => {
         }
 
         loser.folded = true;
+        if (!loser.seen) {
+            io.to(loser.id).emit("yourCards", loser.cards);
+        }
+
+        // 结算筹码
+        playerA.chips -= room.currentBet * 2;
+        room.pot += room.currentBet * 2;
 
         const active = GameLogic.activePlayers(room);
         if (active.length <= 1) {
             const winner = GameLogic.settle(room);
+            if (!winner.seen) {
+                io.to(winner.id).emit("yourCards", winner.cards);
+            }
             GameLogic.nextBanker(room, winner.id);
             room.state = "gameOver";
-            io.to(room.id).emit("gameOver", { winner, room });
             resetGame(room.id)
+            io.to(room.id).emit("gameOver", { winner, room });
             return;
         }
-
+        GameLogic.nextTurn(room);
         notifyRoom(room.id, room)
     });
-
     // 玩家准备
     socket.on("ready", () => {
         console.log("用户准备:", socket.id);
@@ -196,11 +218,10 @@ io.on("connection", (socket) => {
         if (room.players.length >= 2 && room.players.every(p => p.ready)) {
             room.state = "playing";
             GameLogic.dealCards(room);
-            notifyRoom(room.id, room)
-        } else {
-            notifyRoom(room.id, room)
         }
+        notifyRoom(room.id, room, 'gameStart')
     });
+    // 取消准备
     socket.on("unready", () => {
         console.log("用户取消准备:", socket.id);
         const room = roomManager.getRoom(socket.roomId);
@@ -217,10 +238,12 @@ io.on("connection", (socket) => {
         const room = roomManager.getRoom(socket.roomId);
         if (!room) return;
         room.state = "waiting";
-        room.players.forEach(i => i.folded = false)
-        notifyRoom(room.id, room)
+        room.players.forEach(i => {
+            i.folded = false
+            i.seen = false
+        })
+        notifyRoom(room.id, room, 'gameStart')
     });
-
     // 申请借筹码
     socket.on("requestLoan", ({ targetId, amount }) => {
         const room = roomManager.getRoom(socket.roomId);
@@ -231,7 +254,6 @@ io.on("connection", (socket) => {
             amount
         });
     });
-
     // 接受借筹码
     socket.on("acceptLoan", ({ fromId, amount }) => {
         const room = roomManager.getRoom(socket.roomId);
@@ -246,7 +268,6 @@ io.on("connection", (socket) => {
             notifyRoom(room.id, room)
         }
     });
-
     // 自动准备
     socket.on("autoReady", () => {
         const room = roomManager.getRoom(socket.roomId);
@@ -257,7 +278,7 @@ io.on("connection", (socket) => {
 
         player.autoReady = true;
     });
-
+    // 断开连接
     socket.on("disconnect", () => {
         const roomId = socket.roomId;
         let room = roomManager.getRoom(roomId)
