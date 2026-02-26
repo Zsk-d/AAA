@@ -437,8 +437,8 @@
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script type="module" src="./js/main.js"></script>
     <script>
-        const socket = io("http://localhost:3000");
-        // const socket = io("/");
+        // const socket = io("http://localhost:3000");
+        const socket = io("/");
         const { createApp, ref, onMounted } = Vue;
 
         createApp({
