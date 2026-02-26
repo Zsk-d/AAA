@@ -5,10 +5,13 @@
     <meta charset="UTF-8" />
     <meta name="color-scheme" content="light">
     <meta name="color-scheme" content="only light">
-    <link rel="manifest" href="manifest.json" />
     <title>AAA</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
     <style>
+        [v-cloak] {
+            display: none;
+        }
+
         html,
         body,
         * {
@@ -206,7 +209,7 @@
 </head>
 
 <body>
-    <div id="app" style="height: 100%;">
+    <div id="app" style="height: 100%;" v-cloak>
         <!-- 登录容器 -->
         <div id="loginPanel" v-if="action.showLogin">
             <div class="login-box">
@@ -284,7 +287,7 @@
                                         </div>
                                     </div>
                                     <span v-if="room.state === 'playing'" style="font-size: 14px;">
-                                        跟注: {{ room.currentBet }} 闷: {{ room.menBet }} </span>
+                                        跟注: {{ room.currentBet }} 闷注: {{ room.menBet }} </span>
                                     <span style="font-size: 16px;font-weight: bold;">
                                         {{ room.state === 'waiting'? `&nbsp;等待开始
                                         准备(${room.players.filter(i=>i.ready).length}/${room.players.length})` :'' }}
