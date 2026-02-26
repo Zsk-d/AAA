@@ -443,7 +443,7 @@
         createApp({
             setup() {
                 const form = ref({
-                    roomId: '1',
+                    roomId: null,
                     // 随机名称
                     name: 'user-' + Math.random().toString(36).substring(2, 5),
                     initChips: null,
@@ -575,6 +575,13 @@
                         const name = this.form.name;
                         const initChips = this.form.initChips;
                         const baseBet = this.form.baseBet;
+
+                        if (!roomId) {
+                            alert("请填写房间号")
+                        }
+                        if (!name) {
+                            alert("请填写昵称")
+                        }
 
                         socket.emit("createOrJoinRoom", {
                             roomId,
