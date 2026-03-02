@@ -27,6 +27,9 @@ export class RoomManager {
     getRoom(roomId) {
         return this.rooms.get(roomId);
     }
+    getRooms() {
+        return this.rooms
+    }
 
     removePlayer(roomId, playerId) {
         const room = this.rooms.get(roomId);

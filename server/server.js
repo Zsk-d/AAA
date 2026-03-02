@@ -6,8 +6,8 @@ import { RoomManager } from './roomManager.js';
 import { GameLogic } from './gameLogic.js';
 import { v4 as uuidv4 } from 'uuid';
 
-
 const roomManager = new RoomManager();
+
 const notifyRoom = (roomId, room, action) => {
     if (!room) {
         return
@@ -59,6 +59,24 @@ const io = new Server(server, {
 const userSocketMap = {}
 const db = await initDB();
 
+
+setInterval(() => {
+    roomManager.getRooms().forEach(room => {
+        room.players.forEach(player => {
+            if (player.offline) {
+                if (!player.offlineTime) {
+                    player.offlineTime = Date.now()
+                }
+                if (Date.now() - player.offlineTime > 2 * 60 * 1000) {
+                    // 删除玩家
+                    roomManager.removePlayer(room.id, player.id)
+                    notifyRoom(room.id, room)
+                }
+            }
+        });
+    });
+}, 10 * 1000);
+
 io.on("connection", (socket) => {
 
     console.log("用户连接:", socket.id);
@@ -105,6 +123,7 @@ io.on("connection", (socket) => {
                 p.id = socket.id
 
                 player = p
+                player.offlineTime = null
             } else {
                 socket.emit("errorMsg", "无法恢复对局, 请重新加入");
                 return;
@@ -400,7 +419,7 @@ io.on("connection", (socket) => {
         if (!roomId) return;
         let room = roomManager.getRoom(roomId)
 
-        if (room.players.filter(i=>!i.offline).length > 2 && room.state === "playing" && room.turnIndex === room.players.map(i => i.id).indexOf(socket.id)) {
+        if (room.players.filter(i => !i.offline).length > 2 && room.state === "playing" && room.turnIndex === room.players.map(i => i.id).indexOf(socket.id)) {
             GameLogic.nextTurn(room);
         }
 
