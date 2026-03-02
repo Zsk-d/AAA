@@ -65,7 +65,7 @@ io.on("connection", (socket) => {
     userSocketMap[socket.id] = socket;
 
     // 创建或加入房间
-    socket.on("createOrJoinRoom", ({ roomId, name, baseBet, initChips, spectator }) => {
+    socket.on("createOrJoinRoom", ({ roomId, name, baseBet, initChips, spectator, playerId }) => {
 
         if (!roomId) {
             socket.emit("errorMsg", "房间号不能为空");
@@ -74,44 +74,76 @@ io.on("connection", (socket) => {
         let room = roomManager.getRoom(roomId);
 
         if (!room && !spectator) {
-            room = roomManager.createRoom(roomId, baseBet || 1, initChips || 1000);
+            if (!playerId) {
+                room = roomManager.createRoom(roomId, baseBet || 1, initChips || 1000);
+            } else {
+                socket.emit("errorMsg", "房间不存在");
+                return;
+            }
         }
 
         if (!room) {
             socket.emit("errorMsg", "房间不存在");
             return;
         }
-        if (room.state !== 'waiting') {
+        if (!playerId && room.state !== 'waiting') {
             socket.emit("errorMsg", "房间对局正在进行, 请等待");
             return;
         }
 
         // 检查name是否存在
-        if (room.players.find(p => p.name === name)) {
+        if (!playerId && room.players.find(p => p.name === name)) {
             socket.emit("errorMsg", "名称已存在");
             return;
         }
 
-        const player = {
-            id: socket.id,
-            name,
-            chips: room.initChips,
-            ready: false
-        };
+        let player = null
+        if (playerId) {
+            let p = room.players.find(p => p.id === playerId);
+            if (p && p.offline) {
+                p.offline = false
+                p.id = socket.id
 
-        if (spectator) {
-            room.spectators.push(player);
-        } else {
-            if (room.players.length >= 6) {
-                socket.emit("errorMsg", "房间已满");
+                player = p
+            } else {
+                socket.emit("errorMsg", "无法恢复对局, 请重新加入");
                 return;
             }
-            room.players.push(player);
+        } else {
+            player = {
+                id: socket.id,
+                name,
+                chips: room.initChips,
+                ready: false,
+                roomId
+            };
+
+
+            if (spectator) {
+                room.spectators.push(player);
+            } else {
+                if (room.players.length >= 6) {
+                    socket.emit("errorMsg", "房间已满");
+                    return;
+                }
+                room.players.push(player);
+            }
         }
 
         socket.join(roomId);
         socket.roomId = roomId;
+
+        // 检查游戏是否结束
+        if (room.state === 'gameOver') {
+            io.to(room.id).emit("gameOver", { winner: room.winner, room });
+        }
+
         notifyRoom(roomId, room)
+
+        // 检查是否看牌
+        if (player.seen) {
+            socket.emit("yourCards", player.cards || [{}, {}, {}]);
+        }
     });
     // 下注
     socket.on("bet", ({ amount }) => {
@@ -146,7 +178,7 @@ io.on("connection", (socket) => {
         if (!room) return;
 
         const player = room.players.find(p => p.id === socket.id);
-        if (!player || player.folded) return;
+        if (!player || player.folded || player.isBetBase) return;
 
         if (GameLogic.betBase(room, player)) {
             notifyRoom(room.id, room)
@@ -173,6 +205,7 @@ io.on("connection", (socket) => {
             room.state = "gameOver";
             resetGame(room.id)
             winner.type = parsePlayerCardType(winner)
+            room.winner = winner;
             io.to(room.id).emit("gameOver", { winner, room });
             return;
         }
@@ -256,6 +289,7 @@ io.on("connection", (socket) => {
             room.state = "gameOver";
             resetGame(room.id)
             winner.type = parsePlayerCardType(winner)
+            room.winner = winner;
             io.to(room.id).emit("gameOver", { winner, room });
             return;
         }
@@ -294,6 +328,7 @@ io.on("connection", (socket) => {
         const room = roomManager.getRoom(socket.roomId);
         if (!room) return;
         room.state = "waiting";
+        room.winner = null;
         room.players.forEach(i => {
             i.folded = false
             i.seen = false
@@ -362,17 +397,19 @@ io.on("connection", (socket) => {
     // 断开连接
     socket.on("disconnect", () => {
         const roomId = socket.roomId;
-        let room = roomManager.getRoom(roomId)
         if (!roomId) return;
+        let room = roomManager.getRoom(roomId)
 
-        let players = roomManager.removePlayer(roomId, socket.id);
-        if (players.length === 1) {
-            roomManager.resetRoom(roomId)
-            io.to(players[0].id).emit("roomReset", roomManager.getRoom(roomId));
-        } else {
+        if (room.players.filter(i=>!i.offline).length > 2 && room.state === "playing" && room.turnIndex === room.players.map(i => i.id).indexOf(socket.id)) {
+            GameLogic.nextTurn(room);
+        }
+
+        let players = roomManager.offlinePlayer(roomId, socket.id);
+        if (players.length > 1) {
             notifyRoom(roomId, roomManager.getRoom(roomId))
         }
 
+        // 设置用户为离线状态
         delete userSocketMap[socket.id];
     });
 });

@@ -45,6 +45,21 @@ export class RoomManager {
         }
     }
 
+    offlinePlayer(roomId, playerId) {
+        const room = this.rooms.get(roomId);
+        if (!room) return;
+        room.players.find(p => p.id === playerId).offline = true
+
+        // 检查房间是否没人了, 没人则直接删除房
+        if (room.players.filter(p => !p.offline).length === 0) {
+            this.rooms.delete(roomId);
+            return []
+        } else {
+            // 剩下多个人, 返回房间内玩家
+            return room.players
+        }
+    }
+
     closeRoom(roomId) {
         const room = this.rooms.get(roomId);
         if (!room) return;

@@ -155,7 +155,7 @@ export class GameLogic {
 
     // ===== 获取剩余玩家 =====
     static activePlayers(room) {
-        return room.players.filter(p => !p.folded);
+        return room.players.filter(p => !p.folded && !p.offline);
     }
 
     // ===== 推进回合 =====
@@ -165,7 +165,7 @@ export class GameLogic {
 
         do {
             next = (next + 1) % total;
-        } while (room.players[next].folded);
+        } while (room.players[next].folded || room.players[next].offline);
 
         room.turnIndex = next;
         room.msg = ' 开始下注'
