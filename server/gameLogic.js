@@ -73,7 +73,16 @@ export class GameLogic {
         if (isStraight && isFlush) return { type: 5, values };
         if (isFlush) return { type: 4, values };
         if (isStraight) return { type: 3, values };
-        if (counts.includes(2)) return { type: 2, values };
+        
+        // 对子：需要把对子的值放在最后，方便比较
+        if (counts.includes(2)) {
+            // 找出对子的值和单张的值
+            const pairValue = Object.keys(countMap).find(v => countMap[v] === 2);
+            const singleValue = Object.keys(countMap).find(v => countMap[v] === 1);
+            // 重新排列：[单张，对子值，对子值]
+            return { type: 2, values: [parseInt(singleValue), parseInt(pairValue), parseInt(pairValue)] };
+        }
+        
         return { type: 1, values };
     }
 
